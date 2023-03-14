@@ -24,43 +24,46 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 ##CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("POSTGRES_DATABASE_URL", "sqlite:///blog.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
 
-class User(Base, UserMixin, db.Model):
-    __tablename__ = "user"
-    id = db.Column(db.Integer, primary_key=True)
+with app.app_context():
+    class User(Base, UserMixin, db.Model):
+        __tablename__ = "user"
+        id = db.Column(db.Integer, primary_key=True)
 
-    posts = relationship("BlogPost", backref="user")
-    comments = relationship("Comment", backref="user")
+        posts = relationship("BlogPost", backref="user")
+        comments = relationship("Comment", backref="user")
 
-    name = db.Column(db.String(250), nullable=False)
-    email = db.Column(db.String(250), nullable=False, unique=True)
-    password = db.Column(db.String(250), nullable=False)
+        name = db.Column(db.String(250), nullable=False)
+        email = db.Column(db.String(250), nullable=False, unique=True)
+        password = db.Column(db.String(250), nullable=False)
 
-class BlogPost(Base, db.Model):
-    __tablename__ = "blogpost"
-    id = db.Column(db.Integer, primary_key=True)
+    class BlogPost(Base, db.Model):
+        __tablename__ = "blogpost"
+        id = db.Column(db.Integer, primary_key=True)
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    comments = relationship("Comment", backref="blogpost")
+        author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+        comments = relationship("Comment", backref="blogpost")
 
-    author = db.Column(db.String(250), nullable=False)
-    title = db.Column(db.String(250), unique=True, nullable=False)
-    subtitle = db.Column(db.String(250), nullable=False)
-    date = db.Column(db.String(250), nullable=False)
-    body = db.Column(db.Text, nullable=False)
-    img_url = db.Column(db.String(250), nullable=False)
+        author = db.Column(db.String(250), nullable=False)
+        title = db.Column(db.String(250), unique=True, nullable=False)
+        subtitle = db.Column(db.String(250), nullable=False)
+        date = db.Column(db.String(250), nullable=False)
+        body = db.Column(db.Text, nullable=False)
+        img_url = db.Column(db.String(250), nullable=False)
 
-class Comment(Base, db.Model):
-    __tablename__ = "comment"
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text, nullable=False, unique=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    blog_id = db.Column(db.Integer, db.ForeignKey('blogpost.id'))
+    class Comment(Base, db.Model):
+        __tablename__ = "comment"
+        id = db.Column(db.Integer, primary_key=True)
+        text = db.Column(db.Text, nullable=False, unique=False)
+        author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+        blog_id = db.Column(db.Integer, db.ForeignKey('blogpost.id'))
+
+    db.create_all()
 
 
 @login_manager.user_loader
